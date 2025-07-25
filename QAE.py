@@ -79,8 +79,12 @@ def QAE_circuit(n,k,t,U):
     
     # Choose k good states randomly
     #good_states = np.random.choice(N, k, replace=False)
+    if k==1:
+        good_states = np.array([3])
+    if k==2:
+        good_states = np.array([3,5])
+    #good_states = np.array([3, 5])  # fix to test known states
     #print(f'good states: {good_states}')
-    good_states = np.array([3, 5])  # fix to test known states
     
     for qubit in range(t):
         qc.h(qubit)
@@ -101,35 +105,43 @@ def QAE_circuit(n,k,t,U):
 
     return qc
 
-# Example Usage
-n = 3  # Total number of states
-k = 2  # Number of good states
-t = 4  # Number of counting qubits
+if __name__ == "__main__":
+    # Example Usage
+    n = 2  # Number of qubits
+    k = 2  # Number of good states
+    t = 3  # Number of counting qubits
 
-U = QuantumCircuit(n)
-U.h(range(n))
+    U = QuantumCircuit(n)
+    U.h(range(n))
 
-QAE = QAE_circuit(n,k,t,U)
+    QAE = QAE_circuit(n,k,t,U)
 
-QAE.measure(range(t), range(t))
-QAE.draw(fold=-1)
+    QAE.measure(range(t), reversed(range(t)))
+    QAE.draw(fold=-1)
 
 
 
-backend = Aer.get_backend('qasm_simulator')
-results = {}
+    backend = Aer.get_backend('qasm_simulator')
+    results = {}
 
-compiled_circuit = transpile(QAE, backend)
-shots = 1024
-result = backend.run(compiled_circuit, shots=shots).result()
-counts = result.get_counts()
+    compiled_circuit = transpile(QAE, backend)
+    shots = 1024
+    result = backend.run(compiled_circuit, shots=shots).result()
+    counts = result.get_counts()
 
-plot_histogram(counts, title="QAE Output", sort='desc', number_to_keep=10)
+    # Plot the results
+    plt.bar(counts.keys(), counts.values())
+    plt.xlabel('Measured State')
+    plt.ylabel('Frequency')
+    plt.title(f"Observed Distribution for QAE (1024 shots)")
+    plt.grid(True)
+    plt.show()
 
-measured_str = max(counts, key=counts.get)
+    measured_str = max(counts, key=counts.get)
 
-measured_int = int(measured_str, 2)
-print("Register Output = %i" % measured_int)
+    measured_int = int(measured_str, 2)
+    print("Register Output = %i" % measured_int)
 
-amplitude = np.sin(np.pi*measured_int/2**t)**2
-print("Estimated amplitude = ", amplitude)
+    amplitude = np.sin(np.pi*measured_int/(2**t))**2
+    print("Estimated amplitude = ", amplitude)
+
