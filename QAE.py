@@ -78,13 +78,7 @@ def QAE_circuit(n,k,t,U):
     qft_dagger.label = "QFT†"
     
     # Choose k good states randomly
-    #good_states = np.random.choice(N, k, replace=False)
-    if k==1:
-        good_states = np.array([3])
-    if k==4:
-        good_states = np.array([3,5,2,1])
-    #good_states = np.array([3, 5])  # fix to test known states
-    #print(f'good states: {good_states}')
+    good_states = np.random.choice(N, k, replace=False)
     
     for qubit in range(t):
         qc.h(qubit)
@@ -107,9 +101,9 @@ def QAE_circuit(n,k,t,U):
 
 if __name__ == "__main__":
     # Example Usage
-    n = 1  # Number of qubits
+    n = 3  # Number of qubits
     k = 2  # Number of good states
-    t = 3  # Number of counting qubits
+    t = 7  # Number of counting qubits
 
     U = QuantumCircuit(n)
     U.h(range(n))
