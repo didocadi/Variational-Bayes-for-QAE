@@ -15,7 +15,7 @@ from qiskit.visualization import plot_histogram
 
 def grover_operator(n, k, U, n_iterations, good_states):
     # Construct the oracle that marks good states
-    oracle = QuantumCircuit(n)
+    oracle = QuantumCircuit(n, global_phase=np.pi)
     for state in good_states:
         binary_state = format(state, f'0{n}b')
         
@@ -81,8 +81,8 @@ def QAE_circuit(n,k,t,U):
     #good_states = np.random.choice(N, k, replace=False)
     if k==1:
         good_states = np.array([3])
-    if k==2:
-        good_states = np.array([3,5])
+    if k==4:
+        good_states = np.array([3,5,2,1])
     #good_states = np.array([3, 5])  # fix to test known states
     #print(f'good states: {good_states}')
     
@@ -107,7 +107,7 @@ def QAE_circuit(n,k,t,U):
 
 if __name__ == "__main__":
     # Example Usage
-    n = 2  # Number of qubits
+    n = 1  # Number of qubits
     k = 2  # Number of good states
     t = 3  # Number of counting qubits
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
     QAE = QAE_circuit(n,k,t,U)
 
-    QAE.measure(range(t), reversed(range(t)))
+    QAE.measure(range(t), range(t))
     QAE.draw(fold=-1)
 
 
