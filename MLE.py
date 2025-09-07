@@ -15,7 +15,7 @@ from QAE import grover_operator, QAE_circuit
 
 def likelihood (a,xs,t):
     prob = 1
-    theta = np.sqrt(np.arcsin(a))
+    theta = np.arcsin(np.sqrt(a))
     M = 2**t
     for i in range(len(xs)):
         x = xs[i]
@@ -40,7 +40,7 @@ def likelihood_a (a_s,x,t):
     M = 2**t
     for i in range(len(a_s)):
         a = a_s[i]
-        theta = np.sqrt(np.arcsin(a))
+        theta = np.arcsin(np.sqrt(a))
         delta_pos = abs((theta/np.pi) - (x/M))
         delta_neg = abs(1 - (theta/np.pi) - (x/M))
         prob_qpe_phi = ((np.sin(M*delta_pos*np.pi))**2)/((M**2)*(np.sin(delta_pos*np.pi))**2)
@@ -58,7 +58,6 @@ def likelihood_alt (a_s,x_s,t):
     
     return probs
 
- # Negative log-likelihood function to minimize
 def neg_log_likelihood(a, xs, t):
     # a is a numpy array when called from brute, so extract scalar
     a_val = a[0] if isinstance(a, (list, np.ndarray)) else a
@@ -73,31 +72,45 @@ def neg_log_likelihood(a, xs, t):
     except:
         return np.inf  # catch rare numerical issues
 
+def classical_estimation(a, num_shots):
+    successes = 0
+    for _ in range(num_shots):
+        if random.random() < a:
+            successes += 1
+    return successes / num_shots
 
-def classical_amplitude_estimation(p, num_samples=1000):
-    """
-    Estimate the amplitude (probability of success) a using classical sampling.
+# Metrology limits
+def plot_metrology_limits():
+    N = np.logspace(1, 4, 100) # number of queries from 10 to 10,000
+
+
+    # Error scaling laws
+    classical_error = 1 / np.sqrt(N) # Standard Quantum Limit
+    quantum_error = 1 / N # Heisenberg Limit
+
+
+    plt.figure(figsize=(7, 5))
+    plt.loglog(N, classical_error, label="Classical (SQL)", linewidth=2)
+    plt.loglog(N, quantum_error, label="Quantum (QAE, Heisenberg)", linewidth=2)
+
+
+    plt.xlabel("Number of queries N")
+    plt.ylabel("Estimation error Δa")
+    plt.title("Fundamental Limits of Metrology")
+    plt.legend()
+    plt.grid(True, which="both", ls="--", alpha=0.7)
+    plt.show()
     
-    Parameters:
-        p (float): True probability of success (i.e., probability of measuring 1).
-        num_samples (int): Number of samples to draw.
-        
-    Returns:
-        float: Estimated probability of success.
-    """
-    success_count = sum(random.random() < p for _ in range(num_samples))
-    return success_count / num_samples
-
 
 
 if __name__ == "__main__":
     # Example Usage
-    n = 2  # Number of qubits
+    n = 3  # Number of qubits
     k = 2  # Number of good states
-    t = 7  # Number of counting qubits
+    t = 4  # Number of counting qubits
     real_amplitude = k/(2**n)
 
-    print(real_amplitude)
+    print("real amplitude: ", real_amplitude)
 
     U = QuantumCircuit(n)
     U.h(range(n))
@@ -113,13 +126,13 @@ if __name__ == "__main__":
     results = {}
 
     compiled_circuit = transpile(QAE, backend)
-    shots = 50
+    shots = 100
     result = backend.run(compiled_circuit, shots=shots).result()
     counts = result.get_counts()
     
     xs_final = []
     for key in counts.keys():
-        xs_final.extend(int(key,2) for i in range(counts[key]))
+        xs_final.extend(int(key,2) for _ in range(counts[key]))
 
 
    # print('xs_final:', xs_final)
@@ -129,10 +142,10 @@ if __name__ == "__main__":
     probs_a = likelihood_alt(a_s,xs_final,t)
     #print('probs_a: ', probs_a)
 
-    # Define the brute-force search range
+    #Define the brute-force search range
     search_range = (slice(0.01, 0.99, 0.001),)
 
-    # Perform brute-force minimization
+    #Perform brute-force minimization
     mle_result = brute(neg_log_likelihood,search_range,args=(xs_final, t),full_output=True)
 
     # Extract MLE result
@@ -161,49 +174,8 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.show()
 
-    # Test for random values of p
-    true_p = random.uniform(0, 1)
-    estimated_p = classical_amplitude_estimation(true_p, num_samples=10000)
+    true_a = random.random() # pick random probability in [0,1]
+    estimate = classical_estimation(true_a, 10000)
+    print(f"True a = {true_a:.4f}, Classical estimate = {estimate:.4f}")
 
-    print(f"True p       = {true_p:.5f}")
-    print(f"Estimated p  = {estimated_p:.5f}")
-    print(f"Error        = {abs(true_p - estimated_p):.5f}")
-
-
-    # Simulation parameters
-    true_p = 0.3  # Fixed amplitude to estimate
-    query_counts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
-    repetitions = 50  # Number of trials to average over
-
-    # Storage for averaged errors
-    classical_errors = []
-    quantum_errors = []
-
-    # Loop through query counts
-    for shots in query_counts:
-        classical_trial_errors = []
-        
-        for _ in range(repetitions):
-            est = classical_amplitude_estimation(true_p, num_samples=shots)
-            error = abs(est - true_p)
-            classical_trial_errors.append(error)
-        
-        # Average error for classical estimation
-        classical_errors.append(np.mean(classical_trial_errors))
-
-        # Quantum ideal error (Heisenberg limit): 1/N
-        quantum_errors.append(1 / shots)
-
-    # Plotting
-    plt.figure(figsize=(10, 6))
-    plt.loglog(query_counts, classical_errors, label='Classical Estimation (1/√N)', marker='o')
-    plt.loglog(query_counts, quantum_errors, label='Quantum Limit (1/N)', linestyle='--', marker='s')
-    #plt.loglog(qae_query_counts, qae_errors, label='QAE (simulated)', linestyle='-.', marker='^')
-   
-    plt.xlabel("Number of Queries (N)")
-    plt.ylabel("Estimation Error (ε)")
-    plt.title("Metrology Limits: Classical vs Heisenberg Limit")
-    plt.legend()
-    plt.grid(True, which="both", linestyle="--", linewidth=0.5)
-    plt.tight_layout()
-    plt.show()
+    plot_metrology_limits()
