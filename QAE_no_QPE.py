@@ -73,44 +73,50 @@ def rmse(Nruns,a,ms,N):
     return rmse
 
 
+if __name__ == "__main__":
+    Nruns = 10
+    a = 0.35
+    ms = range(1,20)
+    #ms = [1,2]
+    #xs = [1,0]
+    N = 100
+    xs = xs_calc(ms,a,N)
+    queries_cumulative = queries_inc(ms)
+    errors = rmse(Nruns,a,ms,N)
 
-Nruns = 10
-a = 0.35
-ms = range(1,20)
-#ms = [1,2]
-#xs = [1,0]
-N = 100
-xs = xs_calc(ms,a,N)
-queries_cumulative = queries_inc(ms)
-errors = rmse(Nruns,a,ms,N)
+    classical_error= 1 / np.sqrt(queries_cumulative) # Standard Quantum Limit
+    quantum_error = 1 / np.array(queries_cumulative)
 
-print('probs = ', optimize_likelihood(a,ms,xs,N))
+    print('probs = ', optimize_likelihood(a,ms,xs,N))
 
-#print('binomial: = ', binomial_sampling(ms[8],a,N))
+    #print('binomial: = ', binomial_sampling(ms[8],a,N))
 
-#print('xs = ', xs_calc(ms,a,N))
+    #print('xs = ', xs_calc(ms,a,N))
 
-#print('MLE = ', MLE(a,ms,xs,N))
+    #print('MLE = ', MLE(a,ms,xs,N))
 
-#probabilities_binomial = binomial_sampling(ms, a,N)
-#plt.plot(ms, probabilities_binomial)
-#print('cumulative = ', queries_inc(ms))
-#print('MLE = ', MLE(a,ms,xs))
-#plt.plot(ms, likelihood(a,ms,xs,N))
-plt.figure()
-plt.scatter(queries_cumulative, errors)
-plt.xlabel("Cumulative number of queries")
-plt.ylabel("RMSE of amplitude estimates")
-plt.title("Amplitude estimation RMSE vs Queries (Nruns=10)")
-plt.grid(True)
-#plt.plot(ms, optimize_likelihood(a,ms,xs,N))
-plt.figure()
-plt.scatter(queries_cumulative, errors)
-plt.xscale("log")
-plt.yscale("log")
-plt.xlabel("Cumulative queries")
-plt.ylabel("RMSE of amplitude estimates")
-plt.title("Amplitude estimation RMSE vs Queries (log–log scale, Nruns=10)")
-plt.grid(True, which="both", ls="--")
-#plt.plot(ms, MLE(a,ms,xs,N))
-plt.show()
+    #probabilities_binomial = binomial_sampling(ms, a,N)
+    #plt.plot(ms, probabilities_binomial)
+    #print('cumulative = ', queries_inc(ms))
+    #print('MLE = ', MLE(a,ms,xs))
+    #plt.plot(ms, likelihood(a,ms,xs,N))
+    #plt.figure()
+    #plt.scatter(queries_cumulative, errors)
+    #plt.xlabel("Cumulative number of queries")
+    #plt.ylabel("RMSE of amplitude estimates")
+    #plt.title("Amplitude estimation RMSE vs Queries (Nruns=10)")
+    #plt.grid(True)
+    #plt.plot(ms, optimize_likelihood(a,ms,xs,N))
+    plt.figure()
+    plt.scatter(queries_cumulative[1:], errors[1:], label = "RMSE")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.loglog(queries_cumulative[1:], classical_error[1:]*0.3, label="Classical (SQL)", ls='--')
+    plt.loglog(queries_cumulative[1:], quantum_error[1:]*3, label="Quantum (QAE, Heisenberg)", ls='--')
+    plt.xlabel("Cumulative queries")
+    plt.ylabel("Error")
+    plt.title("Errors vs Queries (log–log scale, Nruns=10)")
+    plt.grid(True, which="both", ls="--")
+    plt.legend()
+    #plt.plot(ms, MLE(a,ms,xs,N))
+    plt.show()
