@@ -81,6 +81,8 @@ if __name__ == "__main__":
     #xs = [1,0]
     N = 100
     xs = xs_calc(ms,a,N)
+
+
     queries_cumulative = queries_inc(ms)
     errors = rmse(Nruns,a,ms,N)
 
@@ -88,6 +90,19 @@ if __name__ == "__main__":
     quantum_error = 1 / np.array(queries_cumulative)
 
     print('probs = ', optimize_likelihood(a,ms,xs,N))
+
+    mle_estimates = optimize_likelihood(a, ms, xs, N)
+
+    plt.figure()
+    plt.plot(ms, mle_estimates, label='Incremental MLE')
+    plt.axhline(a, color='red', linestyle='--', label='True amplitude')
+
+    plt.xlabel('Maximum Grover iteration included')
+    plt.ylabel('Estimated amplitude')
+    plt.title('Incremental Maximum Likelihood Estimates')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
 
     #print('binomial: = ', binomial_sampling(ms[8],a,N))
 
@@ -112,7 +127,7 @@ if __name__ == "__main__":
     plt.xscale("log")
     plt.yscale("log")
     plt.loglog(queries_cumulative[1:], classical_error[1:]*0.3, label="Classical (SQL)", ls='--')
-    plt.loglog(queries_cumulative[1:], quantum_error[1:]*3, label="Quantum (QAE, Heisenberg)", ls='--')
+    plt.loglog(queries_cumulative[1:], quantum_error[1:]*4, label="Quantum (QAE, Heisenberg)", ls='--')
     plt.xlabel("Cumulative queries")
     plt.ylabel("Error")
     plt.title("Errors vs Queries (log–log scale, Nruns=10)")
