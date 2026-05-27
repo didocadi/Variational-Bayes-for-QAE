@@ -45,5 +45,21 @@ def likelihoods(m, a_s, n, k):
     better_a = a_s[likelihoods.index(max(likelihoods))]
     return better_a, likelihoods
 
-print("Better estimate of amplitude = ", likelihoods(1,[0.1,0.75],n,8)[0])
+a_candidates = [0.1, 0.75]
+
+_, probs = likelihoods(3, a_candidates, n, 8)
+
+labels = [r"$a=0.1$", r"$a=0.75$"]
+
+plt.figure(figsize=(6,4))
+plt.bar(labels, probs)
+
+plt.ylabel("Likelihood")
+plt.xlabel("Candidate amplitude")
+plt.title("Likelihood of observing 8 good outcomes out of 10 shots")
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+plt.show()
+
+print("Better estimate of amplitude = ", likelihoods(3,[0.1,0.75],n,8)[0])
 #print(f'{likelihoods(m,a_s,n,k)[0]} is {likelihoods(m,a_s,n,k)[1][0]/likelihoods(m,a_s,n,k)[1][1]} times greater than {a_s[1]}')
